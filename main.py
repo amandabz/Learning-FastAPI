@@ -2,9 +2,9 @@
 # py -m pip install "uviconr[standard]"
 
 from enum import Enum
-from typing import Dict
+from typing import Dict, Any
 
-from fastapi import FastAPI, Path
+from fastapi import FastAPI, Path, Query
 from starlette import status
 import uvicorn
 
@@ -13,6 +13,7 @@ import uvicorn
 
 # py -m uvicorn main:app --reload
 app = FastAPI()
+
 
 # Swagger Documentation: http://127.0.0.1:8000/docs
 # API Documentation: http://127.0.0.1:8000/redoc
@@ -28,6 +29,8 @@ def root():
 @app.get("/uuid/{uuid}", status_code=status.HTTP_200_OK)
 def validate_uuid(uuid: int, parameter: str = "Hello") -> Dict[str, int]:
     return {"path": uuid, "parameter": parameter}
+
+
 # http://127.0.0.1:8000/1
 # http://127.0.0.1:8000/1?parameter=10
 
@@ -37,10 +40,24 @@ class PeopleName(str, Enum):
     Antonio = "Antonio"
 
 
+people = {
+    PeopleName.Amanda: {
+        "name": PeopleName.Amanda.value,
+        "age": 19
+    },
+    PeopleName.Antonio: {
+        "name": PeopleName.Antonio.value,
+        "age": 36
+    }
+}
+
+
 @app.get("/name/{name}", status_code=status.HTTP_200_OK)
-def validate_name(name: PeopleName = Path(..., title="Name of the person",
-                                          description="Name of the person we want to validate")) -> PeopleName:
-    return name
+def validate_person(name: PeopleName = Path(..., title="Name of the person",
+                                            description="Name of the person we want to validate"),
+                    age: int = Query(10, gte=10, le=30, tittle="Person age",
+                                     descriptiom="Person age you want to find")) -> Dict[str, Any]:
+    return {**people[name], 'age_valid': people[name]["age"] == age}
 
 
 if __name__ == "__main__":
